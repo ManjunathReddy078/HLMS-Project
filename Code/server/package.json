@@ -1,0 +1,12 @@
+{
+  "name": "hlms-local-database",
+  "version": "1.0.0",
+  "description": "Local JSON Database for HLMS Handoff Protocol",
+  "main": "index.js",
+  "scripts": {
+    "start": "json-server db.json --port 5000 --host 0.0.0.0"
+  },
+  "dependencies": {
+    "json-server": "^0.17.4"
+  }
+}

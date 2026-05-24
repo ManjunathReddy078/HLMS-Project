@@ -1,52 +1,60 @@
-import { collection, addDoc, getDocs, updateDoc, doc, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase'; // Assumes firebase.js exports 'db'
-
 /**
  * Universal Database Controller for HLIMS.
- * This is production-ready. Until valid Firebase API keys are inserted in firebase.js,
- * it safely falls back to console.logs for demo purposes while preventing crashes.
+ * Wired directly to the Local JSON Server for frictionless handoff.
  */
+import { Platform } from 'react-native';
 
-const isConfigured = false; // Toggle this to true once Firebase keys are added.
+// Use the physical machine's Wi-Fi IP address so Expo Go on a mobile phone can connect
+const BASE_URL = 'http://10.217.126.75:5000';
 
 export const logCollection = async (ward, items) => {
-  if (!isConfigured) return console.log("[MOCK DB] Collected from", ward, items);
-  
-  await addDoc(collection(db, 'collections'), {
-    ward,
-    items,
-    timestamp: Timestamp.now(),
-    status: 'In Central Laundry'
-  });
+  try {
+    await fetch(`${BASE_URL}/collections`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ward,
+        items,
+        timestamp: new Date().toISOString(),
+        status: 'In Central Laundry'
+      })
+    });
+  } catch (err) {
+    console.error("Local DB Error:", err);
+  }
 };
 
 export const createDispatch = async (vendor, weight, batchDetails) => {
-  if (!isConfigured) return console.log("[MOCK DB] Dispatched to", vendor, weight, batchDetails);
-
-  await addDoc(collection(db, 'dispatches'), {
-    vendor,
-    weight,
-    batchDetails,
-    timestamp: Timestamp.now(),
-    status: 'In Transit'
-  });
+  try {
+    await fetch(`${BASE_URL}/dispatches`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        vendor,
+        weight,
+        batchDetails,
+        timestamp: new Date().toISOString(),
+        status: 'In Transit'
+      })
+    });
+  } catch (err) {
+    console.error("Local DB Error:", err);
+  }
 };
 
 export const processReturn = async (dispatchId, receivedDetails) => {
-  if (!isConfigured) return console.log("[MOCK DB] Return processed for", dispatchId, receivedDetails);
-
-  await addDoc(collection(db, 'returns'), {
-    dispatchId,
-    receivedDetails,
-    timestamp: Timestamp.now(),
-    discrepancies: receivedDetails.due > 0 || receivedDetails.damaged > 0
-  });
-
-  // Update original dispatch status
-  const q = query(collection(db, 'dispatches'), where('dispatchId', '==', dispatchId));
-  const snap = await getDocs(q);
-  if (!snap.empty) {
-    const docRef = doc(db, 'dispatches', snap.docs[0].id);
-    await updateDoc(docRef, { status: 'Reconciled' });
+  try {
+    await fetch(`${BASE_URL}/returns`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        dispatchId,
+        receivedDetails,
+        timestamp: new Date().toISOString(),
+        discrepancies: receivedDetails.due > 0 || receivedDetails.damaged > 0
+      })
+    });
+  } catch (err) {
+    console.error("Local DB Error:", err);
   }
 };

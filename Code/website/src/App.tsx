@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { AlertCircle, Plus, Send, Trash2, Hospital, MapPin, PackageSearch, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
+import { AlertCircle, Plus, Send, Trash2, MapPin, PackageSearch, ShieldCheck } from 'lucide-react';
 
 const LINEN_TYPES = [
   "Bedsheet", "Pillow Cover", "Blankets", "Patient Gown", "Mother Gown", 
@@ -31,7 +31,7 @@ function App() {
     setRequestedItems(requestedItems.filter((_, i) => i !== index));
   };
 
-  const submitRequest = () => {
+  const submitRequest = async () => {
     if (!empId || !empName || !ward || !floor || !room) {
       alert("Validation Failed: All identity and location fields are strictly mandatory.");
       return;
@@ -41,9 +41,29 @@ function App() {
       return;
     }
     
-    // In production, this JSON payload is instantly pushed to Firebase RTDB
-    console.log("Pushing to Firebase:", { empId, empName, ward, floor, room, requestedItems });
-    setIsSubmitted(true);
+    try {
+      const payload = {
+        empId,
+        empName,
+        ward,
+        floor,
+        room,
+        requestedItems,
+        timestamp: new Date().toISOString(),
+        status: "Active"
+      };
+
+      await fetch('http://localhost:5000/sos_requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      setIsSubmitted(true);
+    } catch (error) {
+      alert("Network Error: Could not connect to the Local JSON Database. Ensure the server is running on port 5000.");
+      console.error(error);
+    }
   };
 
   return (

@@ -1,16 +1,53 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { Tabs, router } from 'expo-router';
 import { FontAwesome5, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../theme';
-import { Image, TouchableOpacity, Text, View } from 'react-native';
+import { Image, TouchableOpacity, Text, View, Alert, Vibration } from 'react-native';
 
 // Custom header component injected globally into the App Navigation Bar
 function GlobalHeader() {
+  const [empName, setEmpName] = useState('Loading...');
+  const [empId, setEmpId] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      let name = await AsyncStorage.getItem('user_fullName');
+      let id = await AsyncStorage.getItem('user_empId');
+      
+      if (id) {
+        setEmpId(id);
+        if (name) {
+          setEmpName(name);
+        } else {
+          // Fallback if they bypassed login without fullName saved
+          try {
+            const Constants = require('expo-constants').default;
+            const debuggerHost = Constants.expoConfig?.hostUri;
+            const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+            const res = await fetch(`http://${localIp}:5000/ground_workers?empId=${id}`);
+            const workers = await res.json();
+            if (workers.length > 0) {
+              setEmpName(workers[0].fullName);
+              await AsyncStorage.setItem('user_fullName', workers[0].fullName);
+            }
+          } catch (e) {
+            setEmpName('Unknown');
+          }
+        }
+      } else {
+        setEmpName('No Session');
+      }
+    };
+    fetchUser();
+  }, []);
+
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 5 }}>
       <Image source={require('../../assets/images/logo.png')} style={{width: 55, height: 55, resizeMode: 'contain', marginRight: 10}} />
       <View>
-        <Text style={{fontWeight: '900', fontSize: 18, color: theme.textMain}}>HLM Ground Ops</Text>
-        <Text style={{fontWeight: '600', fontSize: 13, color: theme.textMuted}}>Active: John Doe (EMP-8042)</Text>
+        <Text style={{fontWeight: '900', fontSize: 18, color: theme.textMain}}>HLMS Ground Ops</Text>
+        <Text style={{fontWeight: '600', fontSize: 13, color: theme.textMuted}}>Active: {empName} ({empId})</Text>
       </View>
     </View>
   );
@@ -32,6 +69,78 @@ function LogoutButton() {
 }
 
 export default function TabsLayout() {
+  const notifiedSosIds = useRef<Set<string>>(new Set());
+  const isLoaded = useRef(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('notified_sos_ids').then(data => {
+      if (data) {
+        JSON.parse(data).forEach((id: string) => notifiedSosIds.current.add(id));
+      }
+      isLoaded.current = true;
+    });
+
+    let interval: NodeJS.Timeout;
+    
+    const pollSOS = async () => {
+      try {
+        const Constants = require('expo-constants').default;
+        const debuggerHost = Constants.expoConfig?.hostUri;
+        const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+        
+        const res = await fetch(`http://${localIp}:5000/sos_requests`);
+        const requests = await res.json();
+        
+        const pending = requests.filter((r: any) => r.status === 'Pending' || r.status === 'Active');
+        
+        if (!isLoaded.current) return;
+
+        if (pending.length > 0) {
+          // Sort to strictly get the single absolute newest request
+          pending.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          
+          const latestSos = pending[0];
+          const sosIdStr = latestSos.id.toString();
+
+          if (!notifiedSosIds.current.has(sosIdStr)) {
+            // New SOS found! Alert the worker globally.
+            notifiedSosIds.current.add(sosIdStr);
+            
+            // Persist so it survives app reloads
+            AsyncStorage.setItem('notified_sos_ids', JSON.stringify(Array.from(notifiedSosIds.current)));
+            
+            const totalQty = latestSos.requestedItems ? latestSos.requestedItems.reduce((acc: number, item: any) => acc + item.qty, 0) : 0;
+            const timeStr = latestSos.timestamp ? new Date(latestSos.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+
+            // Play emergency vibration pattern infinitely
+            Vibration.vibrate([0, 500, 200, 500], true);
+
+            Alert.alert(
+              "EMERGENCY SOS REQUEST",
+              `Ward: ${latestSos.ward} (Room ${latestSos.room})\nTime: ${timeStr}\n\n${totalQty} items requested urgently!`,
+              [
+                { text: "View Details", onPress: () => {
+                   Vibration.cancel();
+                   router.push({ pathname: '/(tabs)/distribute', params: { tab: 'EMERGENCY' } });
+                }}
+              ]
+            );
+          }
+        }
+      } catch (e) {
+        // Silently fail if network is unreachable so it doesn't spam errors
+      }
+    };
+
+    // Initial check
+    pollSOS();
+    
+    // Poll every 10 seconds for real-time emergencies
+    interval = setInterval(pollSOS, 10000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Tabs screenOptions={{
       tabBarActiveTintColor: theme.primary,

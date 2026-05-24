@@ -1,0 +1,770 @@
+{
+  "inventory_stats": {
+    "total": 5200,
+    "inCirculation": 1450,
+    "atVendor": 3700,
+    "damaged": 50
+  },
+  "collections": [
+    {
+      "ward": "ICU Ward (Simulated)",
+      "items": [
+        "RFID_TAG_17068",
+        "RFID_TAG_25644",
+        "RFID_TAG_24588",
+        "RFID_TAG_43962",
+        "RFID_TAG_87201",
+        "RFID_TAG_69829",
+        "RFID_TAG_1072",
+        "RFID_TAG_18832",
+        "RFID_TAG_5068",
+        "RFID_TAG_84315",
+        "RFID_TAG_40758",
+        "RFID_TAG_24587",
+        "RFID_TAG_39336",
+        "RFID_TAG_13889",
+        "RFID_TAG_83455",
+        "RFID_TAG_84707",
+        "RFID_TAG_44595",
+        "RFID_TAG_2731",
+        "RFID_TAG_84153",
+        "RFID_TAG_21801",
+        "RFID_TAG_81162",
+        "RFID_TAG_70688",
+        "RFID_TAG_29076",
+        "RFID_TAG_45400",
+        "RFID_TAG_98389",
+        "RFID_TAG_85575",
+        "RFID_TAG_26665",
+        "RFID_TAG_35053",
+        "RFID_TAG_12216",
+        "RFID_TAG_67449",
+        "RFID_TAG_65301",
+        "RFID_TAG_75826",
+        "RFID_TAG_33384",
+        "RFID_TAG_32054",
+        "RFID_TAG_87065",
+        "RFID_TAG_87854",
+        "RFID_TAG_96754",
+        "RFID_TAG_30146",
+        "RFID_TAG_90315",
+        "RFID_TAG_75525",
+        "RFID_TAG_88613",
+        "RFID_TAG_53484",
+        "RFID_TAG_74853",
+        "RFID_TAG_69150",
+        "RFID_TAG_15374",
+        "RFID_TAG_66983",
+        "RFID_TAG_35194",
+        "RFID_TAG_85193",
+        "RFID_TAG_97471",
+        "RFID_TAG_35177"
+      ],
+      "timestamp": "2026-05-18T07:34:47.784Z",
+      "status": "In Central Laundry",
+      "id": 1
+    },
+    {
+      "ward": "ICU",
+      "floor": "3",
+      "room": "345",
+      "bagId": "23",
+      "bagColor": "Yellow",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-19T14:12:38.573Z",
+      "items": [
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_66418",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 2,
+          "serial": "RFID_CLN_14140",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 3,
+          "serial": "RFID_CLN_44112",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_45233",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 2,
+          "serial": "RFID_CLN_82671",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 3,
+          "serial": "RFID_CLN_8129",
+          "color": "Standard",
+          "status": "Matched"
+        }
+      ],
+      "status": "Collected",
+      "id": 2
+    },
+    {
+      "ward": "General Ward",
+      "floor": "4",
+      "room": "404",
+      "bagId": "42",
+      "bagColor": "Blue",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-19T14:25:42.619Z",
+      "items": [
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_87998",
+          "color": "Standard",
+          "status": "Matched"
+        }
+      ],
+      "status": "Collected",
+      "id": 3
+    },
+    {
+      "ward": "ICU",
+      "floor": "8",
+      "room": "80",
+      "bagId": "38",
+      "bagColor": "Yellow",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T04:54:52.752Z",
+      "items": [
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_93313",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 2,
+          "serial": "RFID_CLN_57997",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 3,
+          "serial": "RFID_CLN_77282",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_94975",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 2,
+          "serial": "RFID_CLN_64352",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 3,
+          "serial": "RFID_CLN_48907",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 4,
+          "serial": "RFID_CLN_38122",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 5,
+          "serial": "RFID_CLN_86357",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 6,
+          "serial": "RFID_CLN_59333",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 7,
+          "serial": "RFID_CLN_25199",
+          "color": "Standard",
+          "status": "Matched"
+        }
+      ],
+      "status": "Collected",
+      "id": 4
+    }
+  ],
+  "distributions": [
+    {
+      "ward": "ICU",
+      "floor": "3",
+      "room": "345",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-19T13:59:26.541Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_66418",
+          "category": "Bedsheet"
+        },
+        {
+          "serial": "RFID_CLN_45233",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_82671",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_8129",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_14140",
+          "category": "Bedsheet"
+        },
+        {
+          "serial": "RFID_CLN_44112",
+          "category": "Bedsheet"
+        }
+      ],
+      "id": 1
+    },
+    {
+      "ward": "ICU",
+      "floor": "3",
+      "room": "305",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-19T14:11:56.355Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_59297",
+          "category": "Towel"
+        },
+        {
+          "serial": "RFID_CLN_47089",
+          "category": "Towel"
+        }
+      ],
+      "id": 2
+    },
+    {
+      "ward": "General Ward",
+      "floor": "4",
+      "room": "404",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-19T14:24:57.493Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_87998",
+          "category": "Patient Gown"
+        }
+      ],
+      "id": 3
+    },
+    {
+      "ward": "ICU",
+      "floor": "8",
+      "room": "80",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T04:53:48.262Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_93313",
+          "category": "Towel"
+        },
+        {
+          "serial": "RFID_CLN_57997",
+          "category": "Towel"
+        },
+        {
+          "serial": "RFID_CLN_77282",
+          "category": "Towel"
+        },
+        {
+          "serial": "RFID_CLN_94975",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_64352",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_48907",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_38122",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_86357",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_59333",
+          "category": "Pillow Cover"
+        },
+        {
+          "serial": "RFID_CLN_25199",
+          "category": "Pillow Cover"
+        }
+      ],
+      "id": 4
+    },
+    {
+      "ward": "ICU",
+      "floor": "1",
+      "room": "108",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T05:45:04.597Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_28184",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_37253",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_78144",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_11868",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_99843",
+          "category": "Towel"
+        }
+      ],
+      "id": 5
+    },
+    {
+      "ward": "ICU",
+      "floor": "1",
+      "room": "108",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T05:44:58.697Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_28184",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_37253",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_78144",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_11868",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_99843",
+          "category": "Towel"
+        }
+      ],
+      "id": 6
+    },
+    {
+      "ward": "ICU",
+      "floor": "1",
+      "room": "108",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T05:44:58.863Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_28184",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_37253",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_78144",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_11868",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_99843",
+          "category": "Towel"
+        }
+      ],
+      "id": 7
+    },
+    {
+      "ward": "Surgery",
+      "floor": "2",
+      "room": "123",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T06:30:19.426Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_24487",
+          "category": "Bedsheet"
+        }
+      ],
+      "id": 8
+    },
+    {
+      "ward": "Oncology",
+      "floor": "4",
+      "room": "405A",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-21T05:30:02.440Z",
+      "items": [
+        {
+          "serial": "RFID_SOS_658460",
+          "category": "Patient Gown"
+        }
+      ],
+      "sosId": 9,
+      "id": 9
+    },
+    {
+      "ward": "Oncology",
+      "floor": "4",
+      "room": "405A",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-21T05:30:10.477Z",
+      "items": [
+        {
+          "serial": "RFID_SOS_658460",
+          "category": "Patient Gown"
+        }
+      ],
+      "sosId": 9,
+      "id": 10
+    },
+    {
+      "ward": "General Ward",
+      "floor": "4",
+      "room": "408A",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-21T05:30:20.629Z",
+      "items": [
+        {
+          "serial": "RFID_SOS_147239",
+          "category": "Bedsheet"
+        },
+        {
+          "serial": "RFID_SOS_775949",
+          "category": "Aprons"
+        },
+        {
+          "serial": "RFID_SOS_728188",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_117286",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_548018",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_626055",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_406151",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_188423",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_334091",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_SOS_807823",
+          "category": "Patient Gown"
+        }
+      ],
+      "sosId": 8,
+      "id": 11
+    }
+  ],
+  "dispatches": [
+    {
+      "vendor": "Vendor A",
+      "totalWeight": 146.9,
+      "ratePerKg": 45,
+      "totalCost": 6610.5,
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-20T04:46:36.256Z",
+      "bags": [
+        {
+          "id": "42",
+          "weight": "77.6",
+          "type": "Blue"
+        },
+        {
+          "id": "23",
+          "weight": "69.3",
+          "type": "Yellow"
+        }
+      ],
+      "status": "Dispatched to Vendor",
+      "id": 1
+    }
+  ],
+  "returns": [
+    {
+      "vendor": "Vendor A",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-21T06:05:06.402Z",
+      "receivedWeight": "40",
+      "returnedBags": [
+        null
+      ],
+      "stats": {
+        "expectedCount": 50,
+        "receivedCount": 50,
+        "missingCount": 0,
+        "damagedCount": 0
+      },
+      "missingItems": [],
+      "damagedItems": [],
+      "id": 1
+    }
+  ],
+  "sos_requests": [
+    {
+      "empId": "753951852",
+      "empName": "asdfghjkl",
+      "ward": "Maternity",
+      "floor": "5",
+      "room": "2345",
+      "requestedItems": [
+        {
+          "item": "Pillow Cover",
+          "qty": 1
+        },
+        {
+          "item": "Patient Gown",
+          "qty": 1
+        }
+      ],
+      "timestamp": "2026-05-18T07:21:07.304Z",
+      "status": "Resolved",
+      "id": 1
+    },
+    {
+      "empId": "asdfghj",
+      "empName": "asdfghjk",
+      "ward": "Emergency",
+      "floor": "1",
+      "room": "123r",
+      "requestedItems": [
+        {
+          "item": "Drapes",
+          "qty": 30
+        }
+      ],
+      "timestamp": "2026-05-19T10:05:16.296Z",
+      "status": "Resolved",
+      "id": 2
+    },
+    {
+      "empId": "asdfg",
+      "empName": "asdfgh",
+      "ward": "General Ward",
+      "floor": "4",
+      "room": "12345",
+      "requestedItems": [
+        {
+          "item": "Blankets",
+          "qty": 5
+        },
+        {
+          "item": "Aprons",
+          "qty": 1
+        }
+      ],
+      "timestamp": "2026-05-19T13:02:32.904Z",
+      "status": "Resolved",
+      "id": 3
+    },
+    {
+      "empId": "asdfb",
+      "empName": "asdfgh",
+      "ward": "Emergency",
+      "floor": "7",
+      "room": "720-m",
+      "requestedItems": [
+        {
+          "item": "Bedsheet",
+          "qty": 20
+        },
+        {
+          "item": "Mother Gown",
+          "qty": 42
+        }
+      ],
+      "timestamp": "2026-05-20T04:48:19.216Z",
+      "status": "Resolved",
+      "id": 4
+    },
+    {
+      "empId": "asdfb",
+      "empName": "asdfgh",
+      "ward": "ICU",
+      "floor": "9",
+      "room": "92-m",
+      "requestedItems": [
+        {
+          "item": "Mother Gown",
+          "qty": 1
+        },
+        {
+          "item": "NICU Gown",
+          "qty": 1
+        }
+      ],
+      "timestamp": "2026-05-20T04:56:25.911Z",
+      "status": "Resolved",
+      "id": 5
+    },
+    {
+      "empId": "NUR-89",
+      "empName": "Sarah James",
+      "ward": "Emergency",
+      "floor": "1",
+      "room": "108-S",
+      "requestedItems": [
+        {
+          "item": "Bedsheet",
+          "qty": 8
+        },
+        {
+          "item": "Aprons",
+          "qty": 20
+        },
+        {
+          "item": "Curtains",
+          "qty": 15
+        }
+      ],
+      "timestamp": "2026-05-20T05:18:09.837Z",
+      "status": "Resolved",
+      "id": 6
+    },
+    {
+      "empId": "asdfghj",
+      "empName": "12345zxdfvb",
+      "ward": "Surgery",
+      "floor": "2",
+      "room": "123",
+      "requestedItems": [
+        {
+          "item": "Bedsheet",
+          "qty": 1
+        }
+      ],
+      "timestamp": "2026-05-20T06:28:37.721Z",
+      "status": "Resolved",
+      "id": 7
+    },
+    {
+      "empId": "PES-123",
+      "empName": "Sarah Kanna",
+      "ward": "General Ward",
+      "floor": "4",
+      "room": "408A",
+      "requestedItems": [
+        {
+          "item": "Bedsheet",
+          "qty": 1
+        },
+        {
+          "item": "Aprons",
+          "qty": 1
+        },
+        {
+          "item": "Patient Gown",
+          "qty": 8
+        }
+      ],
+      "timestamp": "2026-05-21T04:58:59.876Z",
+      "status": "Resolved",
+      "id": 8
+    },
+    {
+      "empId": "PES-123",
+      "empName": "Sarah Kanna",
+      "ward": "Oncology",
+      "floor": "4",
+      "room": "405A",
+      "requestedItems": [
+        {
+          "item": "Patient Gown",
+          "qty": 1
+        }
+      ],
+      "timestamp": "2026-05-21T05:00:32.789Z",
+      "status": "Resolved",
+      "id": 9
+    }
+  ],
+  "ground_workers": [
+    {
+      "empId": "EMP-001",
+      "fullName": "Mahesh",
+      "gender": "Male",
+      "role": "Patient Care Supervisor",
+      "title": "Ground Worker",
+      "pin": "1234",
+      "id": 1
+    },
+    {
+      "empId": "EMP-002",
+      "fullName": "Anitha",
+      "gender": "Female",
+      "role": "Patient Care Supervisor",
+      "title": "Ground Worker",
+      "pin": "5678",
+      "id": 2
+    }
+  ]
+}

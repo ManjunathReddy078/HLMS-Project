@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { theme } from '../../theme';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 const LINEN_TYPES = [
   "Bedsheet", "Pillow Cover", "Blankets", "Patient Gown", "Mother Gown", 
@@ -11,20 +13,7 @@ const LINEN_TYPES = [
 
 const WARDS = ['General Ward', 'ICU', 'OT', 'Labour Ward', 'NICU', 'Maternity', 'Emergency'];
 
-// Simulated IoT Tag Data grouped by Category
-const MOCK_IOT_DATA: any = {
-  "Bedsheet": [
-    { sNo: 1, serial: "#849-2A-991X", color: "White", status: "Verified" },
-    { sNo: 2, serial: "#849-2A-992Y", color: "White", status: "Verified" },
-    { sNo: 3, serial: "#849-2A-993Z", color: "Blue", status: "Verified" },
-    { sNo: 4, serial: "#849-2A-994W", color: "White", status: "Verified" },
-    { sNo: 5, serial: "#849-2A-995V", color: "White", status: "Verified" }
-  ],
-  "Patient Gown": [
-    { sNo: 1, serial: "#112-9B-104A", color: "Green", status: "Verified" },
-    { sNo: 2, serial: "#112-9B-105B", color: "Green", status: "Verified" }
-  ]
-};
+
 
 export default function CollectScreen() {
   const [selectedWard, setSelectedWard] = useState('');
@@ -35,25 +24,65 @@ export default function CollectScreen() {
   const [selectedBag, setSelectedBag] = useState<'Yellow' | 'Blue' | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>('Bedsheet');
 
-  const simulateRFIDScan = () => {
-    // Simulating auto-populating counts from the Handheld RFID Scanner
-    const newCounts: any = {};
-    Object.keys(MOCK_IOT_DATA).forEach(category => {
-      newCounts[category] = MOCK_IOT_DATA[category].length.toString();
-    });
-    setQuantities(newCounts);
-    Alert.alert("RFID Scan Complete", "Linen serials successfully read and counted.");
+  const [scannedData, setScannedData] = useState<any>({});
+  const [isScanning, setIsScanning] = useState(false);
+
+  const getApiUrl = () => {
+    const debuggerHost = Constants.expoConfig?.hostUri;
+    const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+    return `http://${localIp}:5000`;
   };
 
-  const updateQuantity = (item: string, qty: string) => {
-    setQuantities(prev => ({ ...prev, [item]: qty }));
+  const simulateRFIDScan = async () => {
+    if (!selectedWard || !floorNo || !roomNo) {
+      Alert.alert("Missing Location", "Please select a ward and enter Floor/Room numbers to scan.");
+      return;
+    }
+
+    setIsScanning(true);
+    try {
+      // Query the central DB to see what was previously distributed to this exact room
+      const res = await fetch(`${getApiUrl()}/distributions?ward=${selectedWard}&floor=${floorNo}&room=${roomNo}`);
+      const data = await res.json();
+
+      if (data.length === 0) {
+         Alert.alert("No Linen Found", "The central database shows no clean linen was ever distributed to this specific room.");
+      } else {
+         // Get the most recent distribution for this room
+         const latestDist = data[data.length - 1];
+         
+         const newCounts: any = {};
+         const newScannedData: any = {};
+
+         latestDist.items.forEach((item: any, index: number) => {
+            const cat = item.category;
+            newCounts[cat] = (newCounts[cat] ? parseInt(newCounts[cat]) + 1 : 1).toString();
+            
+            if (!newScannedData[cat]) newScannedData[cat] = [];
+            newScannedData[cat].push({
+               sNo: newScannedData[cat].length + 1,
+               serial: item.serial,
+               color: "Standard",
+               status: "Matched"
+            });
+         });
+
+         setQuantities(newCounts);
+         setScannedData(newScannedData);
+         Alert.alert("RFID Scan Complete", `Linen serials matched perfectly with the previous drop-off on ${new Date(latestDist.timestamp).toLocaleDateString()}.`);
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Network Error", "Could not connect to the database to verify the room's inventory.");
+    }
+    setIsScanning(false);
   };
 
   const calculateTotal = () => {
     return Object.values(quantities).reduce((a: any, b: any) => a + (parseInt(b) || 0), 0);
   };
 
-  const handleCollection = () => {
+  const handleCollection = async () => {
     if (!selectedWard || !floorNo || !roomNo) {
       Alert.alert("Missing Location", "Please select a ward and enter Floor/Room numbers.");
       return;
@@ -68,21 +97,53 @@ export default function CollectScreen() {
       return;
     }
 
-    const currentDateTime = new Date().toLocaleString();
-    const bagType = selectedBag === 'Yellow' ? "Infected/Soiled" : "General/Wet";
+    try {
+      const empId = await AsyncStorage.getItem('user_empId');
+      const empName = await AsyncStorage.getItem('user_fullName');
 
-    Alert.alert(
-      "Collection Verified",
-      `Date & Time: ${currentDateTime}\nLocation: ${selectedWard} (Floor ${floorNo}, Room ${roomNo})\nPacked ${total} items into ${selectedBag} Bag #${bagId}.\n\nRFID Data Logged successfully.`,
-      [{ text: "Continue Next Room", onPress: () => {
-          setQuantities({});
-          setSelectedWard('');
-          setFloorNo('');
-          setRoomNo('');
-          setSelectedBag(null);
-          setBagId('');
-      }}]
-    );
+      // Flatten the scanned data back into a single array for the POST request
+      let collectedItems: any[] = [];
+      Object.keys(scannedData).forEach(cat => {
+         collectedItems = [...collectedItems, ...scannedData[cat]];
+      });
+
+      const collectionPayload = {
+        ward: selectedWard,
+        floor: floorNo,
+        room: roomNo,
+        bagId: bagId,
+        bagColor: selectedBag,
+        empId: empId || "Unknown",
+        empName: empName || "Unknown",
+        timestamp: new Date().toISOString(),
+        items: collectedItems,
+        status: "Collected"
+      };
+
+      const res = await fetch(`${getApiUrl()}/collections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(collectionPayload)
+      });
+
+      if (!res.ok) throw new Error("Failed to post collection");
+
+      const currentDateTime = new Date().toLocaleString();
+      Alert.alert(
+        "Collection Verified",
+        `Date & Time: ${currentDateTime}\nLocation: ${selectedWard} (Rm ${roomNo})\nPacked ${total} items into ${selectedBag} Bag #${bagId}.\n\nRFID Data Logged successfully to the central hub.`,
+        [{ text: "Continue Next Room", onPress: () => {
+            setQuantities({});
+            setScannedData({});
+            setRoomNo('');
+            setSelectedBag(null);
+            setBagId('');
+        }}]
+      );
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Sync Error", "Could not submit collection to database.");
+    }
   };
 
   return (
@@ -145,7 +206,7 @@ export default function CollectScreen() {
         <Text style={styles.label}>3. Scanned Item Metadata (IoT)</Text>
         <Text style={{fontSize: 13, color: theme.textMuted, marginBottom: 10}}>*Live data syncs when physical RFID cart is paired.</Text>
         
-        {Object.keys(MOCK_IOT_DATA).map((category) => (
+        {Object.keys(scannedData).map((category) => (
           <View key={category} style={styles.accordionContainer}>
             <TouchableOpacity 
               style={styles.accordionHeader} 
@@ -164,12 +225,12 @@ export default function CollectScreen() {
                     <Text style={[styles.tableCellHeader, {width: 100}]}>Status</Text>
                   </View>
                   <ScrollView style={{maxHeight: 150}} nestedScrollEnabled={true}>
-                    {MOCK_IOT_DATA[category].map((item: any, idx: number) => (
+                    {scannedData[category].map((item: any, idx: number) => (
                       <View key={idx} style={styles.tableRow}>
                         <Text style={[styles.tableCell, {width: 50}]}>{item.sNo}</Text>
                         <Text style={[styles.tableCell, {width: 140}]}>{item.serial}</Text>
                         <Text style={[styles.tableCell, {width: 80}]}>{item.color}</Text>
-                        <Text style={[styles.tableCell, {width: 100, color: theme.secondary, fontWeight: 'bold'}]}>{item.status}</Text>
+                        <Text style={[styles.tableCell, {width: 100, color: (theme as any).success || '#10b981', fontWeight: 'bold'}]}>{item.status}</Text>
                       </View>
                     ))}
                   </ScrollView>

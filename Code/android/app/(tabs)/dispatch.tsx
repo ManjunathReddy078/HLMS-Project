@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { theme } from '../../theme';
+
+const RATE_PER_KG = 45; // Admin decided rate
 
 interface CartItem {
   id: string;
@@ -13,10 +17,16 @@ export default function DispatchScreen() {
   const [vendor, setVendor] = useState('Vendor A');
   const [bagId, setBagId] = useState('');
   const [weight, setWeight] = useState('');
-  const [bagType, setBagType] = useState<'Yellow' | 'Blue'>('Yellow');
+  const [isLoading, setIsLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
 
-  const addToCart = () => {
+  const getApiUrl = () => {
+    const debuggerHost = Constants.expoConfig?.hostUri;
+    const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+    return `http://${localIp}:5000`;
+  };
+
+  const addToCart = async () => {
     if (!bagId || !weight) {
       Alert.alert("Missing Data", "Please enter both the Bag ID and the Weight.");
       return;
@@ -26,9 +36,25 @@ export default function DispatchScreen() {
       Alert.alert("Duplicate", "This Bag ID has already been added to the dispatch cart.");
       return;
     }
-    setCart([...cart, { id: bagId, weight, type: bagType }]);
-    setBagId('');
-    setWeight('');
+
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${getApiUrl()}/collections?bagId=${bagId}`);
+      const data = await res.json();
+
+      if (data.length === 0) {
+        Alert.alert("Bag Not Found", `Bag ID '${bagId}' does not exist in the collection database. It cannot be dispatched.`);
+      } else {
+        const dbBagColor = data[0].bagColor;
+        setCart([...cart, { id: bagId, weight, type: dbBagColor }]);
+        setBagId('');
+        setWeight('');
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Network Error", "Could not verify Bag ID with the database.");
+    }
+    setIsLoading(false);
   };
 
   const removeItem = (id: string) => {
@@ -39,20 +65,51 @@ export default function DispatchScreen() {
     return cart.reduce((total, item) => total + parseFloat(item.weight || '0'), 0).toFixed(2);
   };
 
-  const generateChallan = () => {
+  const generateChallan = async () => {
     if (cart.length === 0) {
       Alert.alert("Empty Cart", "Add at least one bag before generating a challan.");
       return;
     }
     
-    Alert.alert(
-      "Digital Challan Generated",
-      `Dispatched ${cart.length} bags (${calculateTotalWeight()} kg) to ${vendor}.\n\nDatabase relation generated successfully mapping physical bags to RFID internal items.`,
-      [{ text: "Complete Handover", onPress: () => {
-          setCart([]);
-          setVendor('Vendor A');
-      }}]
-    );
+    const totalWeight = parseFloat(calculateTotalWeight());
+    const totalCost = totalWeight * RATE_PER_KG;
+
+    try {
+      const empId = await AsyncStorage.getItem('user_empId');
+      const empName = await AsyncStorage.getItem('user_fullName');
+
+      const dispatchPayload = {
+        vendor: vendor,
+        totalWeight: totalWeight,
+        ratePerKg: RATE_PER_KG,
+        totalCost: totalCost,
+        empId: empId || "Unknown",
+        empName: empName || "Unknown",
+        timestamp: new Date().toISOString(),
+        bags: cart,
+        status: "Dispatched to Vendor"
+      };
+
+      const res = await fetch(`${getApiUrl()}/dispatches`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dispatchPayload)
+      });
+
+      if (!res.ok) throw new Error("Failed to post dispatch");
+
+      Alert.alert(
+        "Digital Challan Generated",
+        `Dispatched ${cart.length} bags (${totalWeight} kg) to ${vendor}.\nTotal Value: ₹${totalCost}\n\nDatabase relation generated successfully mapping physical bags to RFID internal items.`,
+        [{ text: "Complete Handover", onPress: () => {
+            setCart([]);
+            setVendor('Vendor A');
+        }}]
+      );
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Sync Error", "Could not submit dispatch challan to database.");
+    }
   };
 
   return (
@@ -113,23 +170,11 @@ export default function DispatchScreen() {
           </View>
         </View>
 
-        <Text style={styles.subLabel}>Bag Infection Protocol</Text>
-        <View style={{flexDirection: 'row', gap: 10, marginBottom: 15}}>
-          <TouchableOpacity 
-             style={[styles.bagToggleBtn, bagType === 'Yellow' && {backgroundColor: '#facc15', borderColor: '#ca8a04'}]} 
-             onPress={() => setBagType('Yellow')}>
-            <Text style={[styles.toggleText, bagType === 'Yellow' && {color: '#fff'}]}>YELLOW (Infected)</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-             style={[styles.bagToggleBtn, bagType === 'Blue' && {backgroundColor: theme.primary, borderColor: theme.primary}]} 
-             onPress={() => setBagType('Blue')}>
-            <Text style={[styles.toggleText, bagType === 'Blue' && {color: '#fff'}]}>BLUE (General)</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.subLabel}>*Bag infection protocol color will be auto-fetched from DB.</Text>
 
-        <TouchableOpacity style={styles.addBtn} onPress={addToCart}>
-          <FontAwesome5 name="plus-circle" size={16} color="#fff" />
-          <Text style={styles.addBtnText}>ADD TO DISPATCH CART</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={addToCart} disabled={isLoading}>
+          {isLoading ? <ActivityIndicator size="small" color="#fff" /> : <FontAwesome5 name="plus-circle" size={16} color="#fff" />}
+          <Text style={styles.addBtnText}>{isLoading ? "VERIFYING BAG..." : "ADD TO DISPATCH CART"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -163,9 +208,13 @@ export default function DispatchScreen() {
              ))
           )}
           
-          <View style={styles.totalRow}>
+          <View style={[styles.totalRow, {borderBottomWidth: 1, borderBottomColor: theme.border}]}>
              <Text style={{fontWeight: '800', color: theme.textMain}}>TOTAL PAYLOAD:</Text>
              <Text style={{fontWeight: '900', fontSize: 18, color: theme.primary}}>{calculateTotalWeight()} kg</Text>
+          </View>
+          <View style={styles.totalRow}>
+             <Text style={{fontWeight: '800', color: theme.textMain}}>CHALLAN VALUE (₹{RATE_PER_KG}/kg):</Text>
+             <Text style={{fontWeight: '900', fontSize: 18, color: theme.textMain}}>₹{(parseFloat(calculateTotalWeight()) * RATE_PER_KG).toFixed(2)}</Text>
           </View>
         </View>
       </View>

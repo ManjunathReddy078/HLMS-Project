@@ -1,15 +1,36 @@
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 import { theme } from '../../theme';
 
 export default function ProfileScreen() {
-  const workerInfo = {
-    name: "John Doe",
-    id: "EMP-8042",
-    role: "Ground Operations (Linen)",
-    assignedZone: "Main Hospital Block"
+  const [workerInfo, setWorkerInfo] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfileData();
+  }, []);
+
+  const fetchProfileData = async () => {
+    try {
+      const savedEmpId = await AsyncStorage.getItem('user_empId');
+      if (savedEmpId) {
+        const debuggerHost = Constants.expoConfig?.hostUri;
+        const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+        
+        const response = await fetch(`http://${localIp}:5000/ground_workers?empId=${savedEmpId}`);
+        const workers = await response.json();
+        if (workers.length > 0) {
+          setWorkerInfo(workers[0]);
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching profile:', e);
+    }
+    setIsLoading(false);
   };
 
   const handleLogout = () => {
@@ -18,10 +39,32 @@ export default function ProfileScreen() {
       "Are you sure you want to log out of your active shift?",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Log Out Safely", style: "destructive", onPress: () => router.replace('/login') }
+        { 
+          text: "Log Out Safely", 
+          style: "destructive", 
+          onPress: async () => {
+            setIsLoading(true); 
+            try {
+              await AsyncStorage.clear(); 
+              // Set a deliberate flag AFTER clearing to tell login screen to stay quiet
+              await AsyncStorage.setItem('just_logged_out', 'yes');
+            } catch (e) {
+              console.error(e);
+            }
+            router.replace('/login');
+          } 
+        }
       ]
     );
   };
+
+  if (isLoading || !workerInfo) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -29,21 +72,26 @@ export default function ProfileScreen() {
         <View style={styles.avatar}>
           <FontAwesome5 name="user-alt" size={40} color={theme.primary} />
         </View>
-        <Text style={styles.name}>{workerInfo.name}</Text>
-        <Text style={styles.idBadge}>ID: {workerInfo.id}</Text>
+        <Text style={styles.name}>{workerInfo.fullName}</Text>
+        <Text style={styles.idBadge}>ID: {workerInfo.empId}</Text>
       </View>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>Identity Details</Text>
         
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Official Role</Text>
+          <Text style={styles.rowLabel}>System Role</Text>
           <Text style={styles.rowValue}>{workerInfo.role}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.row}>
-          <Text style={styles.rowLabel}>Assigned Zone</Text>
-          <Text style={styles.rowValue}>{workerInfo.assignedZone}</Text>
+          <Text style={styles.rowLabel}>Title</Text>
+          <Text style={styles.rowValue}>{workerInfo.title}</Text>
+        </View>
+        <View style={styles.divider} />
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Gender</Text>
+          <Text style={styles.rowValue}>{workerInfo.gender}</Text>
         </View>
       </View>
 
@@ -61,19 +109,6 @@ export default function ProfileScreen() {
         <View style={styles.row}>
           <Text style={styles.rowLabel}>  ↳ Blue (General)</Text>
           <Text style={[styles.rowValue, {color: theme.primary}]}>9 Bags</Text>
-        </View>
-      </View>
-
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>My Distribution Stats (Today)</Text>
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Clean Items Delivered</Text>
-          <Text style={styles.rowValue}>412 Items</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Wards Serviced</Text>
-          <Text style={styles.rowValue}>6 Wards</Text>
         </View>
       </View>
 
@@ -101,7 +136,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
   rowLabel: { fontSize: 16, color: theme.textMuted },
   rowValue: { fontSize: 16, fontWeight: 'bold', color: theme.textMain },
-  divider: { height: 1, backgroundColor: theme.border, my: 10 },
+  divider: { height: 1, backgroundColor: theme.border, marginVertical: 10 },
   logoutBtn: { backgroundColor: theme.danger, padding: 20, borderRadius: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 10 },
   logoutText: { color: '#fff', fontWeight: '900', fontSize: 16 }
 });
