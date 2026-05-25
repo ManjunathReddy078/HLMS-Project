@@ -215,20 +215,20 @@ export default function ReturnScreen() {
                <Text style={{color: theme.textMuted, textAlign: 'center'}}>All vendors have fully returned their dispatched laundry.</Text>
             </View>
          ) : (
-            Object.keys(vendorInventories).map(vendor => {
+            Object.keys(vendorInventories).map((vendor, vIdx) => {
                const items = vendorInventories[vendor];
                const uniqueBags = Array.from(new Set(items.map(i => i.bag)));
                
                return (
-                 <View key={vendor} style={styles.card}>
+                 <View key={`vendor-${vendor}-${vIdx}`} style={styles.card}>
                    <Text style={{fontSize: 20, fontWeight: '900', color: theme.primary}}>{vendor}</Text>
                    <Text style={{color: theme.textMuted, marginBottom: 15}}>Outstanding Debt: {uniqueBags.length} Bags ({items.length} total items)</Text>
                    
                    <View style={{backgroundColor: '#f1f5f9', padding: 10, borderRadius: 8, marginBottom: 15}}>
                       <Text style={{fontWeight: 'bold', fontSize: 13, marginBottom: 5}}>Pending Bags:</Text>
                       <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 5}}>
-                         {uniqueBags.map(b => (
-                            <View key={b} style={{backgroundColor: '#e2e8f0', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4}}>
+                         {uniqueBags.map((b, idx) => (
+                            <View key={`bag-${b || 'empty'}-${idx}`} style={{backgroundColor: '#e2e8f0', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4}}>
                                <Text style={{fontSize: 11, fontWeight: 'bold', color: theme.textMain}}>{b}</Text>
                             </View>
                          ))}
