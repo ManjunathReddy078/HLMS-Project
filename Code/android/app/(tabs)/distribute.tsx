@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -20,7 +20,8 @@ interface RequestedItem {
 }
 
 interface SosRequest {
-  id: string;
+  _id: string;
+  id?: string;
   ward: string;
   room: string;
   floor: string;
@@ -53,7 +54,9 @@ export default function DistributeScreen() {
   const [sosItems, setSosItems] = useState<{serial: string, category: string}[]>([]);
 
   const debuggerHost = Constants.expoConfig?.hostUri;
-  const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+  const localIp = Platform.OS === 'web'
+    ? '127.0.0.1'
+    : (debuggerHost?.split(':')[0] || '10.0.2.2');
   const API_URL = `http://${localIp}:5000`;
 
   // Fetch SOS requests automatically when switching to the EMERGENCY tab
@@ -91,6 +94,20 @@ export default function DistributeScreen() {
   }, [params.tab]);
 
   // --- ROUTINE LOGIC ---
+  // =========================================================================
+  // FUTURE PHYSICAL HARDWARE HOOKUP (Zebra RFD40 SDK / Native Bluetooth SPP)
+  // =========================================================================
+  /*
+  const handlePhysicalRoutineScan = async () => {
+    // 1. Connect or query the physical Zebra Bluetooth Scanner Native Module:
+    // const scannedEPCs = await NativeModules.ZebraScanner.triggerScan();
+    //
+    // 2. Map scanned EPC serials to standard categories and push to state:
+    // const newScannedItems = scannedEPCs.map(epc => ({ serial: epc, category: detectCategory(epc) }));
+    // setRoutineItems([...routineItems, ...newScannedItems]);
+  };
+  */
+
   const handleRoutineScan = () => {
     if (scannerMode === 'ADD') {
        const categories = ["Bedsheet", "Patient Gown", "Towel", "Pillow Cover"];
@@ -213,12 +230,12 @@ export default function DistributeScreen() {
           empName: empName || "Unknown",
           timestamp: new Date().toISOString(),
           items: sosItems,
-          sosId: fulfillingSos?.id
+          sosId: fulfillingSos?._id
         })
       });
 
       // 2. Patch SOS request
-      await fetch(`${API_URL}/sos_requests/${fulfillingSos?.id}`, {
+      await fetch(`${API_URL}/sos_requests/${fulfillingSos?._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Resolved' })
@@ -424,7 +441,7 @@ export default function DistributeScreen() {
                 </View>
               ) : (
                 sosRequests.map((req: SosRequest, idx: number) => (
-                  <View key={req.id || idx.toString()} style={styles.requestBox}>
+                  <View key={req._id || idx.toString()} style={styles.requestBox}>
                     <View style={styles.requestHeader}>
                       <Text style={styles.reqWard}>{req.ward} - Room {req.room}</Text>
                       <Text style={styles.reqTime}>

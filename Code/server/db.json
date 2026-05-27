@@ -207,6 +207,62 @@
       ],
       "status": "Collected",
       "id": 4
+    },
+    {
+      "ward": "Maternity",
+      "floor": "2",
+      "room": "204",
+      "bagId": "24",
+      "bagColor": "Yellow",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-25T07:13:40.267Z",
+      "items": [
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_75989",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 2,
+          "serial": "RFID_CLN_40180",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 3,
+          "serial": "RFID_CLN_2538",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 4,
+          "serial": "RFID_CLN_26748",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 1,
+          "serial": "RFID_CLN_48770",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 2,
+          "serial": "RFID_CLN_62342",
+          "color": "Standard",
+          "status": "Matched"
+        },
+        {
+          "sNo": 3,
+          "serial": "RFID_CLN_96495",
+          "color": "Standard",
+          "status": "Matched"
+        }
+      ],
+      "status": "Collected",
+      "id": 5
     }
   ],
   "distributions": [
@@ -521,6 +577,45 @@
       ],
       "sosId": 8,
       "id": 11
+    },
+    {
+      "ward": "Maternity",
+      "floor": "2",
+      "room": "204",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-25T07:13:11.963Z",
+      "items": [
+        {
+          "serial": "RFID_CLN_75989",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_40180",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_2538",
+          "category": "Patient Gown"
+        },
+        {
+          "serial": "RFID_CLN_48770",
+          "category": "Bedsheet"
+        },
+        {
+          "serial": "RFID_CLN_62342",
+          "category": "Bedsheet"
+        },
+        {
+          "serial": "RFID_CLN_96495",
+          "category": "Bedsheet"
+        },
+        {
+          "serial": "RFID_CLN_26748",
+          "category": "Patient Gown"
+        }
+      ],
+      "id": 12
     }
   ],
   "dispatches": [
@@ -546,6 +641,24 @@
       ],
       "status": "Dispatched to Vendor",
       "id": 1
+    },
+    {
+      "vendor": "Vendor B",
+      "totalWeight": 24,
+      "ratePerKg": 45,
+      "totalCost": 1080,
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-25T07:14:21.972Z",
+      "bags": [
+        {
+          "id": "24",
+          "weight": "24",
+          "type": "Yellow"
+        }
+      ],
+      "status": "Dispatched to Vendor",
+      "id": 2
     }
   ],
   "returns": [
@@ -567,6 +680,25 @@
       "missingItems": [],
       "damagedItems": [],
       "id": 1
+    },
+    {
+      "vendor": "Vendor B",
+      "empId": "EMP-001",
+      "empName": "Mahesh",
+      "timestamp": "2026-05-25T07:20:01.991Z",
+      "receivedWeight": "24",
+      "returnedBags": [
+        null
+      ],
+      "stats": {
+        "expectedCount": 50,
+        "receivedCount": 50,
+        "missingCount": 0,
+        "damagedCount": 0
+      },
+      "missingItems": [],
+      "damagedItems": [],
+      "id": 2
     }
   ],
   "sos_requests": [

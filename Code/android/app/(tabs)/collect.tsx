@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { theme } from '../../theme';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,9 +29,43 @@ export default function CollectScreen() {
 
   const getApiUrl = () => {
     const debuggerHost = Constants.expoConfig?.hostUri;
-    const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+    const localIp = Platform.OS === 'web'
+      ? '127.0.0.1'
+      : (debuggerHost?.split(':')[0] || '10.0.2.2');
     return `http://${localIp}:5000`;
   };
+
+  // =========================================================================
+  // FUTURE PHYSICAL HARDWARE HOOKUP (Zebra RFD40 SDK / Native Bluetooth SPP)
+  // =========================================================================
+  /*
+  const handlePhysicalRFIDScan = async () => {
+    if (!selectedWard || !floorNo || !roomNo) {
+      Alert.alert("Missing Location", "Please select location before scanning.");
+      return;
+    }
+    setIsScanning(true);
+    try {
+      // 1. Connect or query the physical Zebra Bluetooth Scanner Native Module:
+      // const scannedEPCs = await NativeModules.ZebraScanner.triggerScan();
+      //
+      // 2. Deduplicate tag EPC arrays and lookup details on backend:
+      // const res = await fetch(`${getApiUrl()}/linen_items/reconcile`, {
+      //   method: 'POST',
+      //   headers: {'Content-Type': 'application/json'},
+      //   body: JSON.stringify({ tags: scannedEPCs })
+      // });
+      // const matchedItems = await res.json();
+      //
+      // 3. Set standard categories/counts based on returned tags:
+      // setQuantities(matchedItems.counts);
+      // setScannedData(matchedItems.metadata);
+    } catch(err) {
+      Alert.alert("Hardware Error", "Could not connect to handheld RFID scanner.");
+    }
+    setIsScanning(false);
+  };
+  */
 
   const simulateRFIDScan = async () => {
     if (!selectedWard || !floorNo || !roomNo) {
@@ -78,8 +112,8 @@ export default function CollectScreen() {
     setIsScanning(false);
   };
 
-  const calculateTotal = () => {
-    return Object.values(quantities).reduce((a: any, b: any) => a + (parseInt(b) || 0), 0);
+  const calculateTotal = (): number => {
+    return Object.values(quantities).reduce((a: number, b: any) => a + (parseInt(b) || 0), 0);
   };
 
   const handleCollection = async () => {

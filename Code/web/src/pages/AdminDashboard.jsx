@@ -316,7 +316,7 @@ export default function AdminDashboard({ onLogout }) {
                   </div>
                   <div>
                     <p className="text-xs font-bold">New Facility Added</p>
-                    <p className="text-[10px] text-on-surface-variant">North Wing Rehab connected to HLIMS Central</p>
+                    <p className="text-[10px] text-on-surface-variant">North Wing Rehab connected to HLMS Central</p>
                     <p className="text-[10px] text-outline mt-1 uppercase font-bold">09:12 • Admin Panel</p>
                   </div>
                 </div>

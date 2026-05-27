@@ -1,31 +1,84 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Platform } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { theme } from '../../theme';
 
-export default function ProfileScreen() {
-  const [workerInfo, setWorkerInfo] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+interface WorkerInfo {
+  empId: string;
+  fullName: string;
+  role: string;
+  title: string;
+  gender: string;
+}
 
-  useEffect(() => {
-    fetchProfileData();
-  }, []);
+export default function ProfileScreen() {
+  const [workerInfo, setWorkerInfo] = useState<WorkerInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalBags: 0,
+    yellowBags: 0,
+    blueBags: 0
+  });
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfileData();
+    }, [])
+  );
 
   const fetchProfileData = async () => {
     try {
       const savedEmpId = await AsyncStorage.getItem('user_empId');
       if (savedEmpId) {
         const debuggerHost = Constants.expoConfig?.hostUri;
-        const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+        const localIp = Platform.OS === 'web'
+          ? '127.0.0.1'
+          : (debuggerHost?.split(':')[0] || '10.0.2.2');
         
         const response = await fetch(`http://${localIp}:5000/ground_workers?empId=${savedEmpId}`);
         const workers = await response.json();
         if (workers.length > 0) {
           setWorkerInfo(workers[0]);
         }
+
+        // Fetch user's collections to calculate today's stats dynamically
+        const colResponse = await fetch(`http://${localIp}:5000/collections`);
+        const collections = await colResponse.json();
+        
+        const getISTDateString = (dateObj: Date) => {
+          const istDate = new Date(dateObj.getTime() + (5.5 * 60 * 60 * 1000));
+          const year = istDate.getUTCFullYear();
+          const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(istDate.getUTCDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        const todayStr = getISTDateString(new Date());
+        
+        let totalBags = 0;
+        let yellowBags = 0;
+        let blueBags = 0;
+
+        collections.forEach((c: any) => {
+          const colDate = getISTDateString(new Date(c.timestamp));
+          if (colDate === todayStr && c.empId === savedEmpId) {
+            totalBags++;
+            if (c.bagColor === 'Yellow') {
+              yellowBags++;
+            } else if (c.bagColor === 'Blue') {
+              blueBags++;
+            }
+          }
+        });
+
+        setStats({
+          totalBags,
+          yellowBags,
+          blueBags
+        });
       }
     } catch (e) {
       console.error('Error fetching profile:', e);
@@ -99,16 +152,16 @@ export default function ProfileScreen() {
         <Text style={styles.sectionTitle}>My Collection Stats (Today)</Text>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Total Bags Collected</Text>
-          <Text style={styles.rowValue}>14 Bags</Text>
+          <Text style={styles.rowValue}>{stats.totalBags} Bags</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.row}>
           <Text style={styles.rowLabel}>  ↳ Yellow (Infected)</Text>
-          <Text style={[styles.rowValue, {color: '#ca8a04'}]}>5 Bags</Text>
+          <Text style={[styles.rowValue, {color: '#ca8a04'}]}>{stats.yellowBags} Bags</Text>
         </View>
         <View style={styles.row}>
           <Text style={styles.rowLabel}>  ↳ Blue (General)</Text>
-          <Text style={[styles.rowValue, {color: theme.primary}]}>9 Bags</Text>
+          <Text style={[styles.rowValue, {color: theme.primary}]}>{stats.blueBags} Bags</Text>
         </View>
       </View>
 

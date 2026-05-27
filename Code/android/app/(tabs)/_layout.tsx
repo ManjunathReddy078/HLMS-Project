@@ -3,7 +3,8 @@ import { Tabs, router } from 'expo-router';
 import { FontAwesome5, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { theme } from '../../theme';
-import { Image, TouchableOpacity, Text, View, Alert, Vibration } from 'react-native';
+import { Image, TouchableOpacity, Text, View, Alert, Vibration, Platform } from 'react-native';
+import { Audio } from 'expo-av';
 
 // Custom header component injected globally into the App Navigation Bar
 function GlobalHeader() {
@@ -24,7 +25,9 @@ function GlobalHeader() {
           try {
             const Constants = require('expo-constants').default;
             const debuggerHost = Constants.expoConfig?.hostUri;
-            const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+            const localIp = Platform.OS === 'web'
+              ? '127.0.0.1'
+              : (debuggerHost?.split(':')[0] || '10.0.2.2');
             const res = await fetch(`http://${localIp}:5000/ground_workers?empId=${id}`);
             const workers = await res.json();
             if (workers.length > 0) {
@@ -56,8 +59,26 @@ function GlobalHeader() {
 // Custom universal logout button for the right side of the header
 function LogoutButton() {
   const handleWipeLogout = () => {
-    // Navigating explicitly to root authentication boundary
-    router.replace('/login');
+    Alert.alert(
+      "Confirm Logout",
+      "Are you sure you want to log out of your active shift?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Log Out Safely", 
+          style: "destructive", 
+          onPress: async () => {
+            try {
+              await AsyncStorage.clear(); 
+              await AsyncStorage.setItem('just_logged_out', 'yes');
+            } catch (e) {
+              console.error(e);
+            }
+            router.replace('/login');
+          } 
+        }
+      ]
+    );
   };
 
   return (
@@ -71,6 +92,7 @@ function LogoutButton() {
 export default function TabsLayout() {
   const notifiedSosIds = useRef<Set<string>>(new Set());
   const isLoaded = useRef(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   useEffect(() => {
     AsyncStorage.getItem('notified_sos_ids').then(data => {
@@ -80,13 +102,15 @@ export default function TabsLayout() {
       isLoaded.current = true;
     });
 
-    let interval: NodeJS.Timeout;
+    let interval: any;
     
     const pollSOS = async () => {
       try {
         const Constants = require('expo-constants').default;
         const debuggerHost = Constants.expoConfig?.hostUri;
-        const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+        const localIp = Platform.OS === 'web'
+          ? '127.0.0.1'
+          : (debuggerHost?.split(':')[0] || '10.0.2.2');
         
         const res = await fetch(`http://${localIp}:5000/sos_requests`);
         const requests = await res.json();
@@ -100,30 +124,59 @@ export default function TabsLayout() {
           pending.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
           
           const latestSos = pending[0];
-          const sosIdStr = latestSos.id.toString();
+          const sosIdStr = (latestSos._id || latestSos.id || '').toString();
 
-          if (!notifiedSosIds.current.has(sosIdStr)) {
+          if (sosIdStr && !notifiedSosIds.current.has(sosIdStr)) {
             // New SOS found! Alert the worker globally.
             notifiedSosIds.current.add(sosIdStr);
             
             // Persist so it survives app reloads
             AsyncStorage.setItem('notified_sos_ids', JSON.stringify(Array.from(notifiedSosIds.current)));
             
-            const totalQty = latestSos.requestedItems ? latestSos.requestedItems.reduce((acc: number, item: any) => acc + item.qty, 0) : 0;
             const timeStr = latestSos.timestamp ? new Date(latestSos.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
+            const itemsListStr = latestSos.requestedItems 
+              ? latestSos.requestedItems.map((item: any) => `• ${item.qty}x ${item.item}`).join('\n')
+              : '';
 
             // Play emergency vibration pattern infinitely
             Vibration.vibrate([0, 500, 200, 500], true);
 
+            // Play emergency sound in loop
+            const playEmergencySound = async () => {
+              try {
+                if (soundRef.current) {
+                  await soundRef.current.unloadAsync();
+                }
+                const { sound } = await Audio.Sound.createAsync(
+                  require('../../assets/SOS_alert_alarm.wav'),
+                  { shouldPlay: true, isLooping: true }
+                );
+                soundRef.current = sound;
+              } catch (err) {
+                console.error("Failed to play emergency alert sound", err);
+              }
+            };
+            playEmergencySound();
+
             Alert.alert(
-              "EMERGENCY SOS REQUEST",
-              `Ward: ${latestSos.ward} (Room ${latestSos.room})\nTime: ${timeStr}\n\n${totalQty} items requested urgently!`,
+              "🚨 EMERGENCY SOS REQUEST",
+              `Ward: ${latestSos.ward} (Room ${latestSos.room})\nTime: ${timeStr}\n\nRequested Items:\n${itemsListStr}`,
               [
-                { text: "View Details", onPress: () => {
+                { text: "Fulfill Now", onPress: async () => {
                    Vibration.cancel();
+                   if (soundRef.current) {
+                     try {
+                       await soundRef.current.stopAsync();
+                       await soundRef.current.unloadAsync();
+                       soundRef.current = null;
+                     } catch (e) {
+                       console.error(e);
+                     }
+                   }
                    router.push({ pathname: '/(tabs)/distribute', params: { tab: 'EMERGENCY' } });
                 }}
-              ]
+              ],
+              { cancelable: false }
             );
           }
         }
@@ -138,7 +191,13 @@ export default function TabsLayout() {
     // Poll every 10 seconds for real-time emergencies
     interval = setInterval(pollSOS, 10000);
 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      Vibration.cancel();
+      if (soundRef.current) {
+        soundRef.current.unloadAsync().catch(() => {});
+      }
+    };
   }, []);
 
   return (

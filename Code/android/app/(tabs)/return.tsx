@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Platform } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { useFocusEffect } from 'expo-router';
 import { theme } from '../../theme';
 
 interface ExpectedItem {
@@ -27,14 +28,23 @@ export default function ReturnScreen() {
   const [receivedWeight, setReceivedWeight] = useState('');
 
   const debuggerHost = Constants.expoConfig?.hostUri;
-  const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+  const localIp = Platform.OS === 'web'
+    ? '127.0.0.1'
+    : (debuggerHost?.split(':')[0] || '10.0.2.2');
   const API_URL = `http://${localIp}:5000`;
 
-  useEffect(() => {
-    if (phase === 'SELECT_VENDOR') {
-       fetchVendorDebt();
-    }
-  }, [phase]);
+  const normalizeBagId = (id: any): string => {
+    if (typeof id !== 'string') id = String(id || '');
+    return id.replace(/^BAG-/i, '').trim().toUpperCase();
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (phase === 'SELECT_VENDOR') {
+         fetchVendorDebt();
+      }
+    }, [phase])
+  );
 
   const fetchVendorDebt = async () => {
     setIsLoading(true);
@@ -57,30 +67,51 @@ export default function ReturnScreen() {
       returns.sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setCompletedReturns(returns);
       
-      const returnedBagIds = returns.flatMap((r: any) => r.returnedBags || []);
-
       const inventory: Record<string, ExpectedItem[]> = {};
 
       dispatches.forEach((dispatch: any) => {
-         // Skip if this bag has already been returned
-         if (returnedBagIds.includes(dispatch.bagId)) return;
-
          const v = dispatch.vendor || "Unknown Vendor";
-         if (!inventory[v]) inventory[v] = [];
+         if (!dispatch.bags) return;
 
-         const collection = collections.find((c: any) => c.bagId === dispatch.bagId);
-         if (collection && collection.items) {
-             collection.items.forEach((item: any) => {
-                inventory[v].push({
-                   serial: item.serial,
-                   category: item.category,
-                   ward: collection.ward || "Unknown",
-                   room: collection.room || "Unknown",
-                   bag: dispatch.bagId,
-                   dispatchWeight: dispatch.weight
+         dispatch.bags.forEach((bag: any) => {
+            const bagId = bag.id || bag.bagId;
+            if (!bagId) return;
+
+            const cleanBagId = normalizeBagId(bagId);
+            const dispatchTime = new Date(dispatch.timestamp).getTime();
+
+            // Find if there is any return for this bag that occurred AFTER this dispatch
+            const isReturned = returns.some((r: any) => {
+               const returnTime = new Date(r.timestamp).getTime();
+               if (returnTime <= dispatchTime) return false;
+               return (r.returnedBags || []).some((b: any) => normalizeBagId(b) === cleanBagId);
+            });
+
+            // Skip if this bag has already been returned in a newer return
+            if (isReturned) return;
+
+            if (!inventory[v]) inventory[v] = [];
+
+            // Find the closest collection for this bag that occurred BEFORE the dispatch
+            const collection = collections.find((c: any) => {
+               if (normalizeBagId(c.bagId) !== cleanBagId) return false;
+               const colTime = new Date(c.timestamp).getTime();
+               return colTime <= dispatchTime;
+            });
+
+            if (collection && collection.items) {
+                collection.items.forEach((item: any) => {
+                   inventory[v].push({
+                      serial: item.serial,
+                      category: item.category || "Standard",
+                      ward: collection.ward || "Unknown",
+                      room: collection.room || "Unknown",
+                      bag: bagId,
+                      dispatchWeight: bag.weight ? bag.weight.toString() : (dispatch.totalWeight ? dispatch.totalWeight.toString() : "0")
+                   });
                 });
-             });
-         }
+            }
+         });
       });
 
       setVendorInventories(inventory);
@@ -98,6 +129,24 @@ export default function ReturnScreen() {
     setReceivedWeight('');
     setPhase('SCANNING');
   };
+
+  // =========================================================================
+  // FUTURE PHYSICAL HARDWARE HOOKUP (Zebra RFD40 SDK / Native Bluetooth SPP)
+  // =========================================================================
+  /*
+  const handlePhysicalReturnScan = async () => {
+    if (!activeVendor || !vendorInventories[activeVendor]) return;
+    try {
+      // 1. Trigger bluetooth scan for return pile:
+      // const scannedEPCs = await NativeModules.ZebraScanner.triggerScan();
+      //
+      // 2. Set scanned serials state directly:
+      // setScannedSerials(scannedEPCs);
+    } catch(err) {
+      Alert.alert("Hardware Error", "Could not connect to handheld RFID scanner.");
+    }
+  };
+  */
 
   const simulateRFIDScan = () => {
     if (!activeVendor || !vendorInventories[activeVendor]) return;
@@ -209,8 +258,8 @@ export default function ReturnScreen() {
          <Text style={styles.subtitle}>Select a vendor to reconcile their outstanding linen inventory.</Text>
          
          {Object.keys(vendorInventories).length === 0 ? (
-            <View style={[styles.card, {alignItems: 'center', padding: 40, borderColor: theme.success || '#10b981', borderWidth: 2}]}>
-               <Feather name="check-circle" size={48} color={theme.success || '#10b981'} />
+            <View style={[styles.card, {alignItems: 'center', padding: 40, borderColor: theme.secondary, borderWidth: 2}]}>
+               <Feather name="check-circle" size={48} color={theme.secondary} />
                <Text style={{marginTop: 15, fontWeight: 'bold', fontSize: 16}}>No Outstanding Debt</Text>
                <Text style={{color: theme.textMuted, textAlign: 'center'}}>All vendors have fully returned their dispatched laundry.</Text>
             </View>
@@ -253,17 +302,17 @@ export default function ReturnScreen() {
                {completedReturns.map((ret, idx) => {
                   const dateStr = new Date(ret.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
                   return (
-                    <View key={`ret-${idx}`} style={[styles.card, {borderColor: theme.success || '#10b981', borderWidth: 1, padding: 15}]}>
+                    <View key={`ret-${idx}`} style={[styles.card, {borderColor: theme.secondary, borderWidth: 1, padding: 15}]}>
                        <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
                           <Text style={{fontWeight: '900', fontSize: 16, color: theme.primary}}>CHL-{new Date(ret.timestamp).getTime().toString().slice(-6)}</Text>
                           <View style={{backgroundColor: '#f0fdf4', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10}}>
-                             <Text style={{color: theme.success || '#10b981', fontWeight: 'bold', fontSize: 10}}>ACCEPTED</Text>
+                             <Text style={{color: theme.secondary, fontWeight: 'bold', fontSize: 10}}>ACCEPTED</Text>
                           </View>
                        </View>
                        <Text style={{color: theme.textMuted, fontSize: 13, marginVertical: 8}}>{ret.vendor} • {dateStr} • {ret.receivedWeight}kg</Text>
                        <View style={{flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#f8fafc', padding: 8, borderRadius: 5}}>
-                          <Text style={{color: theme.success || '#10b981', fontWeight: 'bold', fontSize: 12}}>✔ Clean: {ret.stats.receivedCount}</Text>
-                          <Text style={{color: theme.warning || '#f59e0b', fontWeight: 'bold', fontSize: 12}}>⚠️ Damaged: {ret.stats.damagedCount}</Text>
+                          <Text style={{color: theme.secondary, fontWeight: 'bold', fontSize: 12}}>✔ Clean: {ret.stats.receivedCount}</Text>
+                          <Text style={{color: theme.accent, fontWeight: 'bold', fontSize: 12}}>⚠️ Damaged: {ret.stats.damagedCount}</Text>
                           <Text style={{color: theme.danger, fontWeight: 'bold', fontSize: 12}}>❌ Miss: {ret.stats.missingCount}</Text>
                        </View>
                     </View>
@@ -296,7 +345,7 @@ export default function ReturnScreen() {
                <Text style={[styles.label, {color: theme.primary}]}>SUCCESSFULLY RECEIVED</Text>
                <Text style={{fontWeight: '900', fontSize: 24}}>{receivedItems.length} items</Text>
                {damagedItemsList.length > 0 && (
-                  <Text style={{color: theme.warning || '#f59e0b', fontWeight: 'bold', marginTop: 5}}>⚠️ Includes {damagedItemsList.length} damaged items</Text>
+                  <Text style={{color: theme.accent, fontWeight: 'bold', marginTop: 5}}>⚠️ Includes {damagedItemsList.length} damaged items</Text>
                )}
             </View>
 
@@ -378,7 +427,7 @@ export default function ReturnScreen() {
            <View style={{padding: 15, paddingBottom: 5}}>
               <Text style={styles.label}>Reconciliation Tracker</Text>
               <View style={{flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 10}}>
-                 <Text style={{fontWeight: 'bold', color: theme.success || '#10b981'}}>Scanned: {scannedObj.length}</Text>
+                 <Text style={{fontWeight: 'bold', color: theme.secondary}}>Scanned: {scannedObj.length}</Text>
                  <Text style={{fontWeight: 'bold', color: theme.danger}}>Missing: {missingObj.length}</Text>
               </View>
            </View>
@@ -405,8 +454,8 @@ export default function ReturnScreen() {
                          {isScanned ? (
                            <TouchableOpacity 
                               onPress={() => toggleDamaged(item.serial)}
-                              style={{backgroundColor: isDamaged ? '#fef2f2' : '#f0fdf4', borderWidth: 1, borderColor: isDamaged ? theme.danger : (theme.success || '#10b981'), paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10}}>
-                              <Text style={{color: isDamaged ? theme.danger : (theme.success || '#10b981'), fontSize: 10, fontWeight: 'bold'}}>{isDamaged ? 'DAMAGED' : 'CLEAN'}</Text>
+                              style={{backgroundColor: isDamaged ? '#fef2f2' : '#f0fdf4', borderWidth: 1, borderColor: isDamaged ? theme.danger : theme.secondary, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10}}>
+                              <Text style={{color: isDamaged ? theme.danger : theme.secondary, fontSize: 10, fontWeight: 'bold'}}>{isDamaged ? 'DAMAGED' : 'CLEAN'}</Text>
                            </TouchableOpacity>
                          ) : (
                            <Text style={{color: theme.textMuted, fontSize: 10, fontWeight: 'bold'}}>PENDING</Text>

@@ -17,8 +17,8 @@ export default function Login({ onLogin }) {
         </div>
         
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-headline font-extrabold tracking-tight mb-2">HLIMS Portal</h1>
-          <p className="text-on-surface-variant text-sm font-medium">Hospital Linen & Inventory Management</p>
+          <h1 className="text-3xl font-headline font-extrabold tracking-tight mb-2">HLMS Portal</h1>
+          <p className="text-on-surface-variant text-sm font-medium">Hospital Laundry Management System</p>
         </div>
 
         <div className="space-y-4">

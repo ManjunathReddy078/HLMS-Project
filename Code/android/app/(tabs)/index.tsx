@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Image, Alert, Platform } from 'react-native';
 import { FontAwesome5, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import { theme } from '../../theme';
 
@@ -28,12 +29,27 @@ export default function HomeDashboard() {
 
   const fetchLiveStats = async () => {
     try {
+      const savedEmpId = await AsyncStorage.getItem('user_empId');
+      if (!savedEmpId) return;
+
       const debuggerHost = Constants.expoConfig?.hostUri;
-      const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+      const localIp = Platform.OS === 'web'
+        ? '127.0.0.1'
+        : (debuggerHost?.split(':')[0] || '10.0.2.2');
       
       // Fetch Collections
       const colRes = await fetch(`http://${localIp}:5000/collections`);
       const collections = await colRes.json();
+      
+      const getISTDateString = (dateObj: Date) => {
+        const istDate = new Date(dateObj.getTime() + (5.5 * 60 * 60 * 1000));
+        const year = istDate.getUTCFullYear();
+        const month = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(istDate.getUTCDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const todayStr = getISTDateString(new Date());
       
       let totalBags = 0;
       let yellowBags = 0;
@@ -43,15 +59,19 @@ export default function HomeDashboard() {
       let blueItems = 0;
 
       collections.forEach((c: any) => {
-        totalBags++;
-        if (c.bagColor === 'Yellow') {
-          yellowBags++;
-          yellowItems += c.items.length;
-        } else if (c.bagColor === 'Blue') {
-          blueBags++;
-          blueItems += c.items.length;
+        const colDate = getISTDateString(new Date(c.timestamp));
+        // Filter by user and today's date
+        if (colDate === todayStr && c.empId === savedEmpId) {
+          totalBags++;
+          if (c.bagColor === 'Yellow') {
+            yellowBags++;
+            yellowItems += c.items.length;
+          } else if (c.bagColor === 'Blue') {
+            blueBags++;
+            blueItems += c.items.length;
+          }
+          totalItems += c.items.length;
         }
-        totalItems += c.items.length;
       });
 
       // Fetch Dispatches
@@ -63,31 +83,35 @@ export default function HomeDashboard() {
       const vB = { weight: 0, lastDate: 'NA', bags: 0 };
 
       dispatches.forEach((d: any) => {
-        const w = parseFloat(d.totalWeight || d.weight || 0);
-        totalWeight += w;
+        const disDate = getISTDateString(new Date(d.timestamp));
+        // Filter by user and today's date
+        if (disDate === todayStr && d.empId === savedEmpId) {
+          const w = parseFloat(d.totalWeight || d.weight || 0);
+          totalWeight += w;
 
-        const dateStr = d.timestamp ? new Date(d.timestamp).toLocaleDateString('en-US', {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : 'NA';
-        const bagCount = d.bags ? d.bags.length : 1;
+          const dateStr = d.timestamp ? new Date(d.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}) : 'NA';
+          const bagCount = d.bags ? d.bags.length : 1;
 
-        if (d.vendor === 'Vendor A') {
-           vA.weight += w;
-           vA.bags += bagCount;
-           vA.lastDate = dateStr;
-        } else if (d.vendor === 'Vendor B') {
-           vB.weight += w;
-           vB.bags += bagCount;
-           vB.lastDate = dateStr;
+          if (d.vendor === 'Vendor A') {
+             vA.weight += w;
+             vA.bags += bagCount;
+             vA.lastDate = dateStr;
+          } else if (d.vendor === 'Vendor B') {
+             vB.weight += w;
+             vB.bags += bagCount;
+             vB.lastDate = dateStr;
+          }
         }
       });
 
       setStats({
-        totalBags: collections.length > 0 ? totalBags.toString() : 'NA',
+        totalBags: totalBags.toString(),
         yellowBags,
         blueBags,
         totalItems,
         yellowItems,
         blueItems,
-        totalWeight: dispatches.length > 0 ? totalWeight.toFixed(1) : 'NA',
+        totalWeight: totalWeight.toFixed(1),
         vendorA: vA,
         vendorB: vB
       });

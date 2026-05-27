@@ -16,11 +16,11 @@ export default function DashboardLayout({ children, role, onLogout }) {
   return (
     <div className={`min-h-screen ${isAdmin ? 'theme-admin' : 'theme-supervisor'} bg-background text-on-surface font-body antialiased`}>
       {/* Top Navbar */}
-      <header className="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-2xl shadow-[0_8px_24px_rgba(25,28,29,0.04)] border-b border-outline-variant/20">
+      <header className="fixed top-0 lg:left-64 left-0 right-0 z-50 bg-surface/80 backdrop-blur-2xl shadow-[0_8px_24px_rgba(25,28,29,0.04)] border-b border-outline-variant/20">
         <div className="flex justify-between items-center w-full px-8 py-3">
           <div className="flex items-center gap-8">
             <span className="text-xl font-black text-primary tracking-tighter font-headline">
-              {isAdmin ? 'HLIMS Clinical Command' : 'LinenFlow HLIMS'}
+              {isAdmin ? 'HLMS Clinical Command' : 'LinenFlow HLMS'}
             </span>
           </div>
           
@@ -48,16 +48,16 @@ export default function DashboardLayout({ children, role, onLogout }) {
       </header>
 
       {/* Side Navigation */}
-      <aside className="h-screen w-64 fixed left-0 top-0 pt-20 bg-surface-container-low hidden lg:flex flex-col shadow-sm border-r border-outline-variant/10">
+      <aside className="h-screen w-64 fixed left-0 top-0 bg-surface-container-low hidden lg:flex flex-col shadow-sm border-r border-outline-variant/10">
         <div className="px-6 py-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <span className="material-symbols-outlined text-on-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+            <span className="material-symbols-outlined text-on-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
               {isAdmin ? 'domain' : 'local_laundry_service'}
             </span>
           </div>
           <div>
-            <p className="font-headline font-bold text-primary leading-tight">HLIMS</p>
-            <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold leading-tight">Hospital Linen Systems</p>
+            <p className="font-headline font-bold text-primary leading-tight">HLMS</p>
+            <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold leading-tight">Hospital Laundry Management System</p>
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Image, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert, Image, ActivityIndicator, Platform } from 'react-native';
 import { router } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -92,7 +92,9 @@ export default function LoginScreen() {
     setIsLoading(true);
     try {
       const debuggerHost = Constants.expoConfig?.hostUri;
-      const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+      const localIp = Platform.OS === 'web'
+        ? '127.0.0.1'
+        : (debuggerHost?.split(':')[0] || '10.0.2.2');
       
       const response = await fetch(`http://${localIp}:5000/ground_workers?empId=${workerId}`);
       const workers = await response.json();

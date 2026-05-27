@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
@@ -22,7 +22,9 @@ export default function DispatchScreen() {
 
   const getApiUrl = () => {
     const debuggerHost = Constants.expoConfig?.hostUri;
-    const localIp = debuggerHost?.split(':')[0] || '10.0.2.2';
+    const localIp = Platform.OS === 'web'
+      ? '127.0.0.1'
+      : (debuggerHost?.split(':')[0] || '10.0.2.2');
     return `http://${localIp}:5000`;
   };
 

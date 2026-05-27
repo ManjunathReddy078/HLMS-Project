@@ -227,20 +227,25 @@ export default function SupervisorDashboard({ onLogout }) {
                 ))}
 
                 {/* Map Discrepancies as Warning Alerts */}
-                {alerts.map(alert => (
-                  <div key={`alert-${alert.id}`} className="relative overflow-hidden bg-surface-container-lowest p-6 rounded-2xl shadow-sm border-l-4 border-[#FFB300] group cursor-pointer hover:bg-surface-bright transition-colors">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="material-symbols-outlined text-[#FFB300]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-                      <span className="text-[10px] font-black text-[#8B6E00] uppercase tracking-widest">Discrepancy</span>
+                {alerts.map(alert => {
+                  const alertIdStr = alert._id ? alert._id.toString().slice(-6).toUpperCase() : 'UNKNOWN';
+                  return (
+                    <div key={`alert-${alert._id || alert.id}`} className="relative overflow-hidden bg-surface-container-lowest p-6 rounded-2xl shadow-sm border-l-4 border-[#FFB300] group cursor-pointer hover:bg-surface-bright transition-colors">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="material-symbols-outlined text-[#FFB300]" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                        <span className="text-[10px] font-black text-[#8B6E00] uppercase tracking-widest">Discrepancy</span>
+                      </div>
+                      <h3 className="text-sm font-bold text-on-surface leading-tight mb-1">Missing items from {alert.vendor || 'Vendor'} (Challan: CHL-{alertIdStr})</h3>
+                      <p className="text-xs text-on-surface-variant">
+                        Expected: {alert.stats?.expectedCount || 0} | Received: {alert.stats?.receivedCount || 0} | Missing: {alert.stats?.missingCount || 0} | Damaged: {alert.stats?.damagedCount || 0}
+                      </p>
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="text-[10px] font-medium text-outline">Action needed</span>
+                        <button className="text-[10px] font-bold text-primary underline">Resolve Alert</button>
+                      </div>
                     </div>
-                    <h3 className="text-sm font-bold text-on-surface leading-tight mb-1">Missing items in Dispatch {alert.dispatchId}</h3>
-                    <p className="text-xs text-on-surface-variant">Due: {alert.receivedDetails.due} | Damaged: {alert.receivedDetails.damaged}</p>
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-[10px] font-medium text-outline">Action needed</span>
-                      <button className="text-[10px] font-bold text-primary underline">Resolve Alert</button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
 
                 {totalAlerts === 0 && (
                   <p className="text-sm text-on-surface-variant text-center mt-10">No active alerts. System optimal.</p>
